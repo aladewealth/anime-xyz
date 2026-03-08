@@ -9,6 +9,7 @@ import AnimeDetail from "./pages/AnimeDetail";
 import MangaDetail from "./pages/MangaDetail";
 import MangaReader from "./pages/MangaReader";
 import Watchlist from "./pages/Watchlist";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
