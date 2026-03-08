@@ -18,6 +18,12 @@ export interface JikanAnime {
   genres: { mal_id: number; name: string }[];
   studios?: { mal_id: number; name: string }[];
   authors?: { mal_id: number; name: string }[];
+  trailer?: {
+    youtube_id: string | null;
+    url: string | null;
+    embed_url: string | null;
+  };
+  streaming?: { name: string; url: string }[];
 }
 
 export interface JikanReview {
