@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, Menu, X, Bookmark } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, Bookmark, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 
