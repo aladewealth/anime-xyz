@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Index from "./pages/Index";
 import AnimeDetail from "./pages/AnimeDetail";
+import MangaDetail from "./pages/MangaDetail";
+import MangaReader from "./pages/MangaReader";
+import Watchlist from "./pages/Watchlist";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +23,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/title/:type/:id" element={<AnimeDetail />} />
+          <Route path="/manga/:mangaId" element={<MangaDetail />} />
+          <Route path="/read/:mangaId/:chapterId" element={<MangaReader />} />
+          <Route path="/watchlist" element={<Watchlist />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

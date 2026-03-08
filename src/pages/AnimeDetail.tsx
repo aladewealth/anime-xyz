@@ -5,6 +5,8 @@ import { ArrowLeft, Star, Calendar, Film, BookOpen, Sparkles, Loader2, Users } f
 import { getAnimeById, getAnimeReviews, getRecommendations, type JikanAnime, type JikanReview } from "@/lib/jikan";
 import ReviewSection from "@/components/ReviewSection";
 import AnimeCard from "@/components/AnimeCard";
+import BookmarkButton from "@/components/BookmarkButton";
+import TrailerEmbed from "@/components/TrailerEmbed";
 
 const AnimeDetail = () => {
   const { type, id } = useParams<{ type: string; id: string }>();
@@ -28,7 +30,6 @@ const AnimeDetail = () => {
       setLoading(false);
     });
 
-    // Fetch reviews and recommendations with slight delays for rate limiting
     setTimeout(() => {
       getAnimeReviews(malId, mediaType).then(setReviews);
     }, 400);
@@ -94,9 +95,23 @@ const AnimeDetail = () => {
             transition={{ delay: 0.3 }}
             className="flex-1 space-y-4"
           >
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground uppercase tracking-wider">
-              {anime.type || mediaType}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground uppercase tracking-wider">
+                {anime.type || mediaType}
+              </span>
+              <BookmarkButton
+                item={{
+                  id: String(anime.mal_id),
+                  type: mediaType,
+                  title: anime.title,
+                  image: anime.images.jpg.image_url,
+                  score: anime.score,
+                  addedAt: new Date().toISOString(),
+                }}
+                size="sm"
+              />
+            </div>
+
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{anime.title}</h1>
             {anime.title_japanese && (
               <p className="text-lg text-muted-foreground">{anime.title_japanese}</p>
@@ -159,7 +174,19 @@ const AnimeDetail = () => {
         </div>
       </motion.section>
 
-      {/* AI Recommendations */}
+      {/* Trailer & Streaming */}
+      {mediaType === "anime" && (anime.trailer?.youtube_id || (anime.streaming && anime.streaming.length > 0)) && (
+        <section className="container mx-auto px-4 mt-10">
+          <TrailerEmbed
+            youtubeId={anime.trailer?.youtube_id || null}
+            embedUrl={anime.trailer?.embed_url || null}
+            streaming={anime.streaming}
+            title={anime.title}
+          />
+        </section>
+      )}
+
+      {/* Recommendations */}
       {recommendations.length > 0 && (
         <section className="container mx-auto px-4 mt-12">
           <div className="flex items-center gap-2 mb-4">
