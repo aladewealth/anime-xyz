@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Sparkles, X, Loader2 } from "lucide-react";
+import { Search, Sparkles, X, Loader2, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { searchAnime, type JikanAnime } from "@/lib/jikan";
+import { searchMangaDex, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
 
 interface SearchModalProps {
   open: boolean;
