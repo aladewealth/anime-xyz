@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, BookOpen } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import AnimeCard from "@/components/AnimeCard";
 import TrendingCarousel from "@/components/TrendingCarousel";
 import { getTopAnime, type JikanAnime } from "@/lib/jikan";
+import { getPopularManga, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
 
 const Index = () => {
   const [activeFilter, setActiveFilter] = useState<"anime" | "manga">("anime");
