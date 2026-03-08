@@ -41,20 +41,29 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
   }, [open, onClose]);
 
   const doSearch = useCallback(
-    (q: string, type: "anime" | "manga") => {
+    (q: string, type: "anime" | "manga" | "read") => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (!q.trim()) {
         setResults([]);
+        setMangadexResults([]);
         setLoading(false);
         return;
       }
       setLoading(true);
       debounceRef.current = setTimeout(async () => {
         try {
-          const data = await searchAnime(q, type);
-          setResults(data);
+          if (type === "read") {
+            const data = await searchMangaDex(q);
+            setMangadexResults(data);
+            setResults([]);
+          } else {
+            const data = await searchAnime(q, type);
+            setResults(data);
+            setMangadexResults([]);
+          }
         } catch {
           setResults([]);
+          setMangadexResults([]);
         } finally {
           setLoading(false);
         }
