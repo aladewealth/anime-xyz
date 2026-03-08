@@ -3,15 +3,16 @@ import { motion } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import AnimeCard from "@/components/AnimeCard";
+import TrendingCarousel from "@/components/TrendingCarousel";
 import { getTopAnime, type JikanAnime } from "@/lib/jikan";
-
-const genres = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Romance", "Sci-Fi", "Slice of Life", "Supernatural"];
 
 const Index = () => {
   const [activeFilter, setActiveFilter] = useState<"anime" | "manga">("anime");
   const [topItems, setTopItems] = useState<JikanAnime[]>([]);
+  const [trendingItems, setTrendingItems] = useState<JikanAnime[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch top items for the grid
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -27,6 +28,20 @@ const Index = () => {
       });
     return () => { cancelled = true; };
   }, [activeFilter]);
+
+  // Fetch trending (airing anime) for carousel
+  useEffect(() => {
+    let cancelled = false;
+    fetch("https://api.jikan.moe/v4/top/anime?filter=airing&limit=10&sfw=true")
+      .then((r) => r.json())
+      .then((json) => {
+        if (!cancelled) setTrendingItems(json.data || []);
+      })
+      .catch(() => {
+        if (!cancelled) setTrendingItems([]);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="min-h-screen">
