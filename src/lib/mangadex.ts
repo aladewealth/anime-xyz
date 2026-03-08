@@ -30,7 +30,26 @@ export interface ChapterPages {
   dataSaver: string[];
 }
 
+export async function getPopularManga(): Promise<MangaDexManga[]> {
+  try {
+    const res = await fetch(
+      `${MANGADEX_API}/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
+    );
+    const json = await res.json();
+    return json.data || [];
+  } catch {
+    return [];
+  }
+}
+
 export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
+  if (!query.trim()) return [];
+  const res = await fetch(
+    `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
+  );
+  const json = await res.json();
+  return json.data || [];
+}
   if (!query.trim()) return [];
   const res = await fetch(
     `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`

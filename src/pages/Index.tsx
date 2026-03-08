@@ -122,6 +122,48 @@ const Index = () => {
         <TrendingCarousel items={trendingItems} type="anime" />
       )}
 
+      {/* Read Manga Section */}
+      {popularManga.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <h2 className="font-display text-xl font-semibold text-foreground">Read Manga</h2>
+              <span className="text-xs text-muted-foreground ml-1">via MangaDex</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {popularManga.map((manga) => {
+              const title = manga.attributes.title.en || manga.attributes.title.ja || Object.values(manga.attributes.title)[0] || "Unknown";
+              return (
+                <Link key={manga.id} to={`/manga/${manga.id}`}>
+                  <motion.div
+                    whileHover={{ y: -4 }}
+                    className="group rounded-xl overflow-hidden border border-border bg-card hover:shadow-lg transition-shadow"
+                  >
+                    <div className="aspect-[3/4] overflow-hidden">
+                      <img
+                        src={getMangaCoverUrl(manga, "256")}
+                        alt={title}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-2.5">
+                      <p className="text-sm font-medium text-foreground truncate">{title}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <BookOpen className="h-3 w-3 text-primary" />
+                        <span className="text-[10px] text-muted-foreground capitalize">{manga.attributes.status}</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Filters */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-2 mb-6">
