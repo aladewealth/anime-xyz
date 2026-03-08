@@ -50,13 +50,6 @@ export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
   const json = await res.json();
   return json.data || [];
 }
-  if (!query.trim()) return [];
-  const res = await fetch(
-    `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
-  );
-  const json = await res.json();
-  return json.data || [];
-}
 
 export async function getMangaDexManga(id: string): Promise<MangaDexManga | null> {
   try {
