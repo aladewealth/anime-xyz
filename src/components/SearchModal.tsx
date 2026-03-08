@@ -13,8 +13,9 @@ interface SearchModalProps {
 const SearchModal = ({ open, onClose }: SearchModalProps) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<JikanAnime[]>([]);
+  const [mangadexResults, setMangadexResults] = useState<MangaDexManga[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState<"anime" | "manga">("anime");
+  const [searchType, setSearchType] = useState<"anime" | "manga" | "read">("anime");
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const navigate = useNavigate();
