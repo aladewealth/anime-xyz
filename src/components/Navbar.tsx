@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, Menu, X } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 
@@ -17,6 +17,18 @@ const Navbar = () => {
     document.documentElement.classList.add("dark");
   }, []);
 
+  // ⌘K shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -30,9 +42,18 @@ const Navbar = () => {
             <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Home</Link>
             <Link to="/?filter=anime" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Anime</Link>
             <Link to="/?filter=manga" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Manga</Link>
+            <Link to="/watchlist" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <Bookmark className="h-3.5 w-3.5" /> Watchlist
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              to="/watchlist"
+              className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+            >
+              <Bookmark className="h-4 w-4" />
+            </Link>
             <button
               onClick={() => setSearchOpen(true)}
               className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
@@ -66,6 +87,9 @@ const Navbar = () => {
                 <Link to="/" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2">Home</Link>
                 <Link to="/?filter=anime" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2">Anime</Link>
                 <Link to="/?filter=manga" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2">Manga</Link>
+                <Link to="/watchlist" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2 flex items-center gap-1">
+                  <Bookmark className="h-3.5 w-3.5" /> Watchlist
+                </Link>
               </div>
             </motion.div>
           )}
