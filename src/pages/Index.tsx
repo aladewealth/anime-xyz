@@ -1,19 +1,32 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
 import AnimeCard from "@/components/AnimeCard";
-import { animeData, genres } from "@/data/animeData";
+import { getTopAnime, type JikanAnime } from "@/lib/jikan";
+
+const genres = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Romance", "Sci-Fi", "Slice of Life", "Supernatural"];
 
 const Index = () => {
-  const [activeFilter, setActiveFilter] = useState<"all" | "anime" | "manga">("all");
-  const [activeGenre, setActiveGenre] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"anime" | "manga">("anime");
+  const [topItems, setTopItems] = useState<JikanAnime[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = animeData.filter((a) => {
-    if (activeFilter !== "all" && a.type !== activeFilter) return false;
-    if (activeGenre && !a.genres.includes(activeGenre)) return false;
-    return true;
-  });
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getTopAnime(activeFilter)
+      .then((data) => {
+        if (!cancelled) setTopItems(data);
+      })
+      .catch(() => {
+        if (!cancelled) setTopItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [activeFilter]);
 
   return (
     <div className="min-h-screen">
@@ -32,7 +45,7 @@ const Index = () => {
               <span className="text-foreground">.xyz</span>
             </h1>
             <p className="mt-3 max-w-md text-foreground/70 text-lg">
-              Discover, explore, and review your favorite anime and manga — powered by AI.
+              Discover, explore, and review your favorite anime and manga — powered by MyAnimeList data.
             </p>
             <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -45,7 +58,7 @@ const Index = () => {
       {/* Filters */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-2 mb-6">
-          {(["all", "anime", "manga"] as const).map((f) => (
+          {(["anime", "manga"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setActiveFilter(f)}
@@ -55,38 +68,29 @@ const Index = () => {
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               }`}
             >
-              {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+              {f.charAt(0).toUpperCase() + f.slice(1)}
             </button>
           ))}
-          <div className="h-5 w-px bg-border mx-2 hidden sm:block" />
-          <div className="flex flex-wrap gap-1.5">
-            {genres.slice(0, 8).map((g) => (
-              <button
-                key={g}
-                onClick={() => setActiveGenre(activeGenre === g ? null : g)}
-                className={`px-3 py-1 rounded-full text-xs transition-colors ${
-                  activeGenre === g
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-secondary/60 text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
+          <span className="text-xs text-muted-foreground ml-2">Top rated on MyAnimeList</span>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-          {filtered.map((anime, i) => (
-            <AnimeCard key={anime.id} anime={anime} index={i} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 text-primary animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {topItems.map((anime, i) => (
+              <AnimeCard key={anime.mal_id} anime={anime} index={i} type={activeFilter} />
+            ))}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!loading && topItems.length === 0 && (
           <div className="py-20 text-center text-muted-foreground">
-            <p className="text-lg">No titles found</p>
-            <p className="text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-lg">Failed to load data</p>
+            <p className="text-sm mt-1">Jikan API may be rate-limited. Try refreshing.</p>
           </div>
         )}
       </section>
@@ -94,7 +98,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border mt-16">
         <div className="container mx-auto px-4 py-8 text-center text-xs text-muted-foreground">
-          <p>© 2026 ANiMe.xyz — Built with ♥ for anime fans everywhere</p>
+          <p>© 2026 ANiMe.xyz — Data from MyAnimeList via Jikan API</p>
         </div>
       </footer>
     </div>

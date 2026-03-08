@@ -19,7 +19,7 @@ const App = () => (
         <Navbar />
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/title/:id" element={<AnimeDetail />} />
+          <Route path="/title/:type/:id" element={<AnimeDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
