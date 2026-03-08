@@ -73,7 +73,7 @@ const Index = () => {
     return () => observer.disconnect();
   }, [loadMore, loading]);
 
-  // Fetch trending
+  // Fetch trending + popular manga
   useEffect(() => {
     let cancelled = false;
     fetch("https://api.jikan.moe/v4/top/anime?filter=airing&limit=10&sfw=true")
@@ -84,6 +84,9 @@ const Index = () => {
       .catch(() => {
         if (!cancelled) setTrendingItems([]);
       });
+    getPopularManga().then((data) => {
+      if (!cancelled) setPopularManga(data);
+    });
     return () => { cancelled = true; };
   }, []);
 
