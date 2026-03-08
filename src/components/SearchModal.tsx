@@ -25,6 +25,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
       setTimeout(() => inputRef.current?.focus(), 100);
       setQuery("");
       setResults([]);
+      setMangadexResults([]);
     }
   }, [open]);
 
