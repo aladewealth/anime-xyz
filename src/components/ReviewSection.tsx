@@ -1,27 +1,36 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Star, ThumbsUp, Send } from "lucide-react";
-import type { Review } from "@/data/animeData";
+import type { JikanReview } from "@/lib/jikan";
 
 interface ReviewSectionProps {
-  reviews: Review[];
-  animeId: string;
+  reviews: JikanReview[];
+  animeId: number;
+}
+
+interface LocalReview {
+  id: string;
+  userName: string;
+  avatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+  likes: number;
 }
 
 const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
   const [newComment, setNewComment] = useState("");
   const [newRating, setNewRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
-  const [localReviews, setLocalReviews] = useState(reviews);
+  const [localReviews, setLocalReviews] = useState<LocalReview[]>([]);
 
   const handleSubmit = () => {
     if (!newComment.trim() || newRating === 0) return;
-    const review: Review = {
-      id: `r-${Date.now()}`,
-      animeId,
-      userName: "Anonymous",
+    const review: LocalReview = {
+      id: `local-${Date.now()}`,
+      userName: "You",
       avatar: "✨",
-      rating: newRating,
+      rating: newRating * 2,
       comment: newComment,
       date: new Date().toISOString().split("T")[0],
       likes: 0,
@@ -33,7 +42,9 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
 
   return (
     <div className="space-y-6">
-      <h2 className="font-display text-xl font-semibold text-foreground">Reviews</h2>
+      <h2 className="font-display text-xl font-semibold text-foreground">
+        Reviews {reviews.length > 0 && `(${reviews.length + localReviews.length})`}
+      </h2>
 
       {/* Write review */}
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -77,11 +88,37 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
         </div>
       </div>
 
-      {/* Reviews list */}
+      {/* Local reviews */}
+      {localReviews.map((review, i) => (
+        <motion.div
+          key={review.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-primary/20 bg-card p-4"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{review.avatar}</span>
+              <div>
+                <p className="text-sm font-medium text-foreground">{review.userName}</p>
+                <p className="text-xs text-muted-foreground">{review.date}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+              <span className="text-sm font-semibold text-foreground">{review.rating}</span>
+              <span className="text-xs text-muted-foreground">/10</span>
+            </div>
+          </div>
+          <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{review.comment}</p>
+        </motion.div>
+      ))}
+
+      {/* MAL reviews */}
       <div className="space-y-3">
-        {localReviews.map((review, i) => (
+        {reviews.map((review, i) => (
           <motion.div
-            key={review.id}
+            key={review.mal_id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
@@ -89,26 +126,37 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-lg">{review.avatar}</span>
+                <img
+                  src={review.user.images.jpg.image_url}
+                  alt={review.user.username}
+                  className="h-7 w-7 rounded-full object-cover"
+                />
                 <div>
-                  <p className="text-sm font-medium text-foreground">{review.userName}</p>
-                  <p className="text-xs text-muted-foreground">{review.date}</p>
+                  <p className="text-sm font-medium text-foreground">{review.user.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(review.date).toLocaleDateString()}
+                    {review.tags.length > 0 && ` · ${review.tags[0]}`}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                <span className="text-sm font-semibold text-foreground">{review.rating}</span>
+                <span className="text-sm font-semibold text-foreground">{review.score}</span>
                 <span className="text-xs text-muted-foreground">/10</span>
               </div>
             </div>
-            <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{review.comment}</p>
+            <p className="mt-3 text-sm text-foreground/80 leading-relaxed line-clamp-4">{review.review}</p>
             <button className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
               <ThumbsUp className="h-3 w-3" />
-              <span>{review.likes}</span>
+              <span>{review.reactions.overall}</span>
             </button>
           </motion.div>
         ))}
       </div>
+
+      {reviews.length === 0 && localReviews.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-4">No reviews yet. Be the first!</p>
+      )}
     </div>
   );
 };
