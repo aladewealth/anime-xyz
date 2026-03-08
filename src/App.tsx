@@ -9,6 +9,7 @@ import AnimeDetail from "./pages/AnimeDetail";
 import MangaDetail from "./pages/MangaDetail";
 import MangaReader from "./pages/MangaReader";
 import Watchlist from "./pages/Watchlist";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/manga/:mangaId" element={<MangaDetail />} />
           <Route path="/read/:mangaId/:chapterId" element={<MangaReader />} />
           <Route path="/watchlist" element={<Watchlist />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, Menu, X, Bookmark } from "lucide-react";
+import { Search, Moon, Sun, Menu, X, Bookmark, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
 
@@ -44,6 +44,9 @@ const Navbar = () => {
             <Link to="/?filter=manga" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Manga</Link>
             <Link to="/watchlist" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
               <Bookmark className="h-3.5 w-3.5" /> Watchlist
+            </Link>
+            <Link to="/dashboard" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
             </Link>
           </div>
 
@@ -89,6 +92,9 @@ const Navbar = () => {
                 <Link to="/?filter=manga" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2">Manga</Link>
                 <Link to="/watchlist" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2 flex items-center gap-1">
                   <Bookmark className="h-3.5 w-3.5" /> Watchlist
+                </Link>
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2 flex items-center gap-1">
+                  <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
                 </Link>
               </div>
             </motion.div>
