@@ -93,6 +93,9 @@ const Navbar = () => {
                 <Link to="/watchlist" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2 flex items-center gap-1">
                   <Bookmark className="h-3.5 w-3.5" /> Watchlist
                 </Link>
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="text-sm font-medium text-muted-foreground py-2 flex items-center gap-1">
+                  <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+                </Link>
               </div>
             </motion.div>
           )}
