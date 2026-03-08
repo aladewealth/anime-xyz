@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -11,14 +11,24 @@ const Index = () => {
   const [topItems, setTopItems] = useState<JikanAnime[]>([]);
   const [trendingItems, setTrendingItems] = useState<JikanAnime[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // Fetch top items for the grid
+  // Reset on filter change
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getTopAnime(activeFilter)
+    setPage(1);
+    setHasMore(true);
+    setTopItems([]);
+    getTopAnime(activeFilter, 1)
       .then((data) => {
-        if (!cancelled) setTopItems(data);
+        if (!cancelled) {
+          setTopItems(data);
+          setHasMore(data.length >= 15);
+        }
       })
       .catch(() => {
         if (!cancelled) setTopItems([]);
@@ -29,7 +39,38 @@ const Index = () => {
     return () => { cancelled = true; };
   }, [activeFilter]);
 
-  // Fetch trending (airing anime) for carousel
+  // Load more
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setLoadingMore(true);
+    getTopAnime(activeFilter, nextPage)
+      .then((data) => {
+        setTopItems((prev) => [...prev, ...data]);
+        setPage(nextPage);
+        setHasMore(data.length >= 15);
+      })
+      .catch(() => setHasMore(false))
+      .finally(() => setLoadingMore(false));
+  }, [activeFilter, page, loadingMore, hasMore]);
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, loading]);
+
+  // Fetch trending
   useEffect(() => {
     let cancelled = false;
     fetch("https://api.jikan.moe/v4/top/anime?filter=airing&limit=10&sfw=true")
@@ -102,9 +143,22 @@ const Index = () => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {topItems.map((anime, i) => (
-              <AnimeCard key={anime.mal_id} anime={anime} index={i} type={activeFilter} />
+              <AnimeCard key={`${anime.mal_id}-${i}`} anime={anime} index={i} type={activeFilter} />
             ))}
           </div>
+        )}
+
+        {/* Infinite scroll sentinel */}
+        <div ref={sentinelRef} className="h-1" />
+
+        {loadingMore && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 text-primary animate-spin" />
+          </div>
+        )}
+
+        {!loading && !hasMore && topItems.length > 0 && (
+          <p className="text-center text-xs text-muted-foreground py-8">You've reached the end ✨</p>
         )}
 
         {!loading && topItems.length === 0 && (
