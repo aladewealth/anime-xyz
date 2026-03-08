@@ -107,17 +107,21 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
           >
             {/* Type toggle */}
             <div className="flex border-b border-border">
-              {(["anime", "manga"] as const).map((t) => (
+              {([
+                { key: "anime" as const, label: "Anime" },
+                { key: "manga" as const, label: "Manga" },
+                { key: "read" as const, label: "📖 Read" },
+              ]).map((t) => (
                 <button
-                  key={t}
-                  onClick={() => setSearchType(t)}
+                  key={t.key}
+                  onClick={() => setSearchType(t.key)}
                   className={`flex-1 py-2 text-xs font-medium transition-colors ${
-                    searchType === t
+                    searchType === t.key
                       ? "text-primary border-b-2 border-primary"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                  {t.label}
                 </button>
               ))}
             </div>
