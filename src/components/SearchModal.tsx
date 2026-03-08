@@ -147,12 +147,12 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
             {query.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                 <Search className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                <p>Search across MyAnimeList's database</p>
-                <p className="text-xs mt-1 opacity-60">Powered by Jikan API</p>
+                <p>{searchType === "read" ? "Search MangaDex for readable manga" : "Search across MyAnimeList's database"}</p>
+                <p className="text-xs mt-1 opacity-60">{searchType === "read" ? "Powered by MangaDex" : "Powered by Jikan API"}</p>
               </div>
             )}
 
-            {query.length > 0 && !loading && results.length === 0 && (
+            {query.length > 0 && !loading && results.length === 0 && mangadexResults.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No results found for "{query}"
               </div>
@@ -166,11 +166,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                     onClick={() => handleSelect(item)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
                   >
-                    <img
-                      src={item.images.jpg.image_url}
-                      alt={item.title}
-                      className="h-12 w-9 rounded object-cover"
-                    />
+                    <img src={item.images.jpg.image_url} alt={item.title} className="h-12 w-9 rounded object-cover" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                       <p className="text-xs text-muted-foreground">
@@ -179,16 +175,37 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {item.genres?.slice(0, 2).map((g) => (
-                        <span
-                          key={g.mal_id}
-                          className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-                        >
-                          {g.name}
-                        </span>
+                        <span key={g.mal_id} className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">{g.name}</span>
                       ))}
                     </div>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {mangadexResults.length > 0 && (
+              <div className="max-h-80 overflow-y-auto">
+                {mangadexResults.map((item) => {
+                  const title = item.attributes.title.en || item.attributes.title.ja || Object.values(item.attributes.title)[0] || "Unknown";
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelectMangaDex(item)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
+                    >
+                      <img src={getMangaCoverUrl(item, "256")} alt={title} className="h-12 w-9 rounded object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.attributes.status} · {item.attributes.year || ""}
+                        </p>
+                      </div>
+                      <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+                        <BookOpen className="h-3 w-3" /> Read
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </motion.div>
