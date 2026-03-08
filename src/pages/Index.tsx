@@ -70,6 +70,11 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Trending Carousel */}
+      {trendingItems.length > 0 && (
+        <TrendingCarousel items={trendingItems} type="anime" />
+      )}
+
       {/* Filters */}
       <section className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap items-center gap-2 mb-6">
