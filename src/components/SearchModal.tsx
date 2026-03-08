@@ -77,8 +77,13 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
   }, [query, searchType, doSearch]);
 
   const handleSelect = (item: JikanAnime) => {
-    const type = searchType;
+    const type = searchType === "read" ? "manga" : searchType;
     navigate(`/title/${type}/${item.mal_id}`);
+    onClose();
+  };
+
+  const handleSelectMangaDex = (item: MangaDexManga) => {
+    navigate(`/manga/${item.id}`);
     onClose();
   };
 
