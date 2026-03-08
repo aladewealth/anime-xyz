@@ -12,6 +12,7 @@ const Index = () => {
   const [activeFilter, setActiveFilter] = useState<"anime" | "manga">("anime");
   const [topItems, setTopItems] = useState<JikanAnime[]>([]);
   const [trendingItems, setTrendingItems] = useState<JikanAnime[]>([]);
+  const [popularManga, setPopularManga] = useState<MangaDexManga[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
