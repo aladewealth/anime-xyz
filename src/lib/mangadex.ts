@@ -1,8 +1,17 @@
-const MANGADEX_API = "https://api.mangadex.org";
+// MangaDex API is CORS-blocked from browsers, so route every API call through our
+// Lovable Cloud edge function proxy at supabase/functions/mangadex-proxy.
+const PROXY_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mangadex-proxy`;
+const PROXY_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-// MangaDex API blocks browser requests via CORS, so route API calls through a public CORS proxy.
-const corsProxy = (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-const mdFetch = (path: string, init?: RequestInit) => fetch(corsProxy(`${MANGADEX_API}${path}`), init);
+const mdFetch = (path: string, init?: RequestInit) =>
+  fetch(`${PROXY_BASE}?path=${encodeURIComponent(path)}`, {
+    ...init,
+    headers: {
+      ...(init?.headers ?? {}),
+      apikey: PROXY_KEY,
+      Authorization: `Bearer ${PROXY_KEY}`,
+    },
+  });
 
 export interface MangaDexManga {
   id: string;

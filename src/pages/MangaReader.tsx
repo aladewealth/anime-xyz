@@ -207,6 +207,7 @@ const MangaReader = () => {
             className="max-h-[calc(100vh-10rem)] object-contain"
             style={{ width: `${textSize}%`, maxWidth: "100%" }}
             draggable={false}
+            referrerPolicy="no-referrer"
           />
         </AnimatePresence>
       </div>
