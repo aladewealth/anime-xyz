@@ -57,7 +57,7 @@ export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
 
 export async function getMangaDexManga(id: string): Promise<MangaDexManga | null> {
   try {
-    const res = await fetch(`${MANGADEX_API}/manga/${id}?includes[]=cover_art&includes[]=author`);
+    const res = await mdFetch(`/manga/${id}?includes[]=cover_art&includes[]=author`);
     if (!res.ok) return null;
     const json = await res.json();
     return json.data;
@@ -81,7 +81,7 @@ export async function getMangaChapters(mangaId: string, offset = 0): Promise<{ c
 
 export async function getChapterPages(chapterId: string): Promise<ChapterPages | null> {
   try {
-    const res = await fetch(`${MANGADEX_API}/at-home/server/${chapterId}`);
+    const res = await mdFetch(`/at-home/server/${chapterId}`);
     if (!res.ok) return null;
     const json = await res.json();
     return {
