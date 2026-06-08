@@ -1,5 +1,9 @@
 const MANGADEX_API = "https://api.mangadex.org";
 
+// MangaDex API blocks browser requests via CORS, so route API calls through a public CORS proxy.
+const corsProxy = (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+const mdFetch = (path: string, init?: RequestInit) => fetch(corsProxy(`${MANGADEX_API}${path}`), init);
+
 export interface MangaDexManga {
   id: string;
   attributes: {
