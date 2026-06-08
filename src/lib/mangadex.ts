@@ -36,8 +36,8 @@ export interface ChapterPages {
 
 export async function getPopularManga(): Promise<MangaDexManga[]> {
   try {
-    const res = await fetch(
-      `${MANGADEX_API}/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
+    const res = await mdFetch(
+      `/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
     );
     const json = await res.json();
     return json.data || [];
@@ -48,8 +48,8 @@ export async function getPopularManga(): Promise<MangaDexManga[]> {
 
 export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
   if (!query.trim()) return [];
-  const res = await fetch(
-    `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
+  const res = await mdFetch(
+    `/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
   );
   const json = await res.json();
   return json.data || [];
@@ -68,8 +68,8 @@ export async function getMangaDexManga(id: string): Promise<MangaDexManga | null
 
 export async function getMangaChapters(mangaId: string, offset = 0): Promise<{ chapters: MangaDexChapter[]; total: number }> {
   try {
-    const res = await fetch(
-      `${MANGADEX_API}/manga/${mangaId}/feed?translatedLanguage[]=en&order[chapter]=asc&limit=50&offset=${offset}&includes[]=scanlation_group`
+    const res = await mdFetch(
+      `/manga/${mangaId}/feed?translatedLanguage[]=en&order[chapter]=asc&limit=50&offset=${offset}&includes[]=scanlation_group`
     );
     if (!res.ok) return { chapters: [], total: 0 };
     const json = await res.json();
