@@ -1,5 +1,9 @@
 const MANGADEX_API = "https://api.mangadex.org";
 
+// MangaDex API blocks browser requests via CORS, so route API calls through a public CORS proxy.
+const corsProxy = (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+const mdFetch = (path: string, init?: RequestInit) => fetch(corsProxy(`${MANGADEX_API}${path}`), init);
+
 export interface MangaDexManga {
   id: string;
   attributes: {
@@ -32,8 +36,8 @@ export interface ChapterPages {
 
 export async function getPopularManga(): Promise<MangaDexManga[]> {
   try {
-    const res = await fetch(
-      `${MANGADEX_API}/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
+    const res = await mdFetch(
+      `/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
     );
     const json = await res.json();
     return json.data || [];
@@ -44,8 +48,8 @@ export async function getPopularManga(): Promise<MangaDexManga[]> {
 
 export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
   if (!query.trim()) return [];
-  const res = await fetch(
-    `${MANGADEX_API}/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
+  const res = await mdFetch(
+    `/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
   );
   const json = await res.json();
   return json.data || [];
@@ -53,7 +57,7 @@ export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
 
 export async function getMangaDexManga(id: string): Promise<MangaDexManga | null> {
   try {
-    const res = await fetch(`${MANGADEX_API}/manga/${id}?includes[]=cover_art&includes[]=author`);
+    const res = await mdFetch(`/manga/${id}?includes[]=cover_art&includes[]=author`);
     if (!res.ok) return null;
     const json = await res.json();
     return json.data;
@@ -64,8 +68,8 @@ export async function getMangaDexManga(id: string): Promise<MangaDexManga | null
 
 export async function getMangaChapters(mangaId: string, offset = 0): Promise<{ chapters: MangaDexChapter[]; total: number }> {
   try {
-    const res = await fetch(
-      `${MANGADEX_API}/manga/${mangaId}/feed?translatedLanguage[]=en&order[chapter]=asc&limit=50&offset=${offset}&includes[]=scanlation_group`
+    const res = await mdFetch(
+      `/manga/${mangaId}/feed?translatedLanguage[]=en&order[chapter]=asc&limit=50&offset=${offset}&includes[]=scanlation_group`
     );
     if (!res.ok) return { chapters: [], total: 0 };
     const json = await res.json();
@@ -77,7 +81,7 @@ export async function getMangaChapters(mangaId: string, offset = 0): Promise<{ c
 
 export async function getChapterPages(chapterId: string): Promise<ChapterPages | null> {
   try {
-    const res = await fetch(`${MANGADEX_API}/at-home/server/${chapterId}`);
+    const res = await mdFetch(`/at-home/server/${chapterId}`);
     if (!res.ok) return null;
     const json = await res.json();
     return {

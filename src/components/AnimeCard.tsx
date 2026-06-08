@@ -53,29 +53,23 @@ const AnimeCard = ({ anime, index, type = "anime", showRank = false }: AnimeCard
           {anime.title_japanese && (
             <p className="text-xs text-muted-foreground line-clamp-1">{anime.title_japanese}</p>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
             {anime.score && (
-              <>
-                <div className="flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-accent text-accent" />
-                  <span className="text-xs font-medium text-foreground">{anime.score}</span>
-                </div>
-                {votes && (
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Users className="h-3 w-3" />
-                    <span>{votes}</span>
-                  </div>
-                )}
-                <span className="text-xs text-muted-foreground">·</span>
-              </>
+              <div className="flex items-center gap-1">
+                <Star className="h-3 w-3 fill-accent text-accent shrink-0" />
+                <span className="text-xs font-medium text-foreground">{anime.score}</span>
+              </div>
+            )}
+            {anime.score && votes && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Users className="h-3 w-3 shrink-0" />
+                <span>{votes}</span>
+              </div>
             )}
             {anime.year && (
-              <>
-                <span className="text-xs text-muted-foreground">{anime.year}</span>
-                <span className="text-xs text-muted-foreground">·</span>
-              </>
+              <span className="text-xs text-muted-foreground">{anime.year}</span>
             )}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate">
               {anime.episodes ? `${anime.episodes} eps` : anime.chapters ? `${anime.chapters} ch` : anime.status}
             </span>
           </div>
