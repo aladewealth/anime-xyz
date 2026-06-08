@@ -81,7 +81,7 @@ const MangaDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             className="shrink-0"
           >
-            <img src={coverUrl} alt={title} className="w-full max-w-[280px] mx-auto md:mx-0 rounded-xl shadow-2xl" />
+            <img src={coverUrl} alt={title} referrerPolicy="no-referrer" className="w-full max-w-[280px] mx-auto md:mx-0 rounded-xl shadow-2xl" />
           </motion.div>
 
           <motion.div

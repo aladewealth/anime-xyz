@@ -193,7 +193,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                       onClick={() => handleSelectMangaDex(item)}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
                     >
-                      <img src={getMangaCoverUrl(item, "256")} alt={title} className="h-12 w-9 rounded object-cover" />
+                      <img src={getMangaCoverUrl(item, "256")} alt={title} referrerPolicy="no-referrer" className="h-12 w-9 rounded object-cover" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{title}</p>
                         <p className="text-xs text-muted-foreground">
