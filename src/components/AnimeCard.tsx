@@ -1,15 +1,25 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Users } from "lucide-react";
 import type { JikanAnime } from "@/lib/jikan";
 
 interface AnimeCardProps {
   anime: JikanAnime;
   index: number;
   type?: "anime" | "manga";
+  showRank?: boolean;
 }
 
-const AnimeCard = ({ anime, index, type = "anime" }: AnimeCardProps) => {
+const formatVotes = (votes?: number | null) => {
+  if (!votes) return null;
+  if (votes >= 1000000) return `${(votes / 1000000).toFixed(1)}m`;
+  if (votes >= 1000) return `${Math.round(votes / 1000)}k`;
+  return String(votes);
+};
+
+const AnimeCard = ({ anime, index, type = "anime", showRank = false }: AnimeCardProps) => {
+  const votes = formatVotes(anime.scored_by);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -30,6 +40,11 @@ const AnimeCard = ({ anime, index, type = "anime" }: AnimeCardProps) => {
               {anime.type || type}
             </span>
           </div>
+          {showRank && (
+            <div className="absolute left-2 top-2 rounded-md bg-background/90 px-2 py-1 text-xs font-semibold text-foreground backdrop-blur">
+              #{anime.rank || index + 1}
+            </div>
+          )}
         </div>
         <div className="mt-3 space-y-1">
           <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
@@ -45,6 +60,12 @@ const AnimeCard = ({ anime, index, type = "anime" }: AnimeCardProps) => {
                   <Star className="h-3 w-3 fill-accent text-accent" />
                   <span className="text-xs font-medium text-foreground">{anime.score}</span>
                 </div>
+                {votes && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span>{votes}</span>
+                  </div>
+                )}
                 <span className="text-xs text-muted-foreground">·</span>
               </>
             )}

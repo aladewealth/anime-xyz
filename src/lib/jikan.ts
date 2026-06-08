@@ -10,8 +10,16 @@ export interface JikanAnime {
   status: string;
   score: number | null;
   scored_by: number | null;
+  rank?: number | null;
+  popularity?: number | null;
+  members?: number | null;
+  favorites?: number | null;
   synopsis: string | null;
   year: number | null;
+  season?: string | null;
+  rating?: string | null;
+  source?: string | null;
+  duration?: string | null;
   images: {
     jpg: { image_url: string; large_image_url: string };
   };

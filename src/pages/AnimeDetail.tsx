@@ -60,6 +60,16 @@ const AnimeDetail = () => {
   const studioOrAuthor = mediaType === "anime"
     ? anime.studios?.map((s) => s.name).join(", ")
     : anime.authors?.map((a) => a.name).join(", ");
+  const facts = [
+    { label: "Rank", value: anime.rank ? `#${anime.rank}` : null },
+    { label: "Popularity", value: anime.popularity ? `#${anime.popularity}` : null },
+    { label: "Members", value: anime.members ? anime.members.toLocaleString() : null },
+    { label: "Favorites", value: anime.favorites ? anime.favorites.toLocaleString() : null },
+    { label: "Source", value: anime.source },
+    { label: "Season", value: anime.season && anime.year ? `${anime.season} ${anime.year}` : anime.season },
+    { label: "Duration", value: anime.duration },
+    { label: "Rating", value: anime.rating },
+  ].filter((fact) => fact.value);
 
   return (
     <div className="min-h-screen pt-16">
@@ -168,6 +178,20 @@ const AnimeDetail = () => {
               <div>
                 <h2 className="font-display text-lg font-semibold text-foreground mb-2">Synopsis</h2>
                 <p className="text-foreground/80 leading-relaxed">{anime.synopsis}</p>
+              </div>
+            )}
+
+            {facts.length > 0 && (
+              <div>
+                <h2 className="mb-3 font-display text-lg font-semibold text-foreground">Title facts</h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {facts.map((fact) => (
+                    <div key={fact.label} className="rounded-lg border border-border bg-card p-3">
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">{fact.label}</p>
+                      <p className="mt-1 line-clamp-2 text-sm font-semibold text-foreground">{fact.value}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
