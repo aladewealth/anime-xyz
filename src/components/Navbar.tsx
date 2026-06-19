@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Moon, Sun, Menu, X, Bookmark, LayoutDashboard } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchModal from "./SearchModal";
+import Logo from "./Logo";
 
 const Navbar = () => {
   const [isDark, setIsDark] = useState(true);
@@ -33,9 +34,12 @@ const Navbar = () => {
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link to="/" className="font-display text-xl font-bold tracking-tight">
-            <span className="text-gradient">ANiMe</span>
-            <span className="text-muted-foreground">.xyz</span>
+          <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold tracking-tight">
+            <Logo className="h-8 w-8" />
+            <span>
+              <span className="text-gradient">ANiMe</span>
+              <span className="text-muted-foreground">.xyz</span>
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
