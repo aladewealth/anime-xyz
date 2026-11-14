@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Minus, Plus, Download, BookOpen, Maximize2, Minimize2 } from "lucide-react";
-import { getChapterPages, getPageUrl, type ChapterPages } from "@/lib/mangadex";
+import { getChapterMeta, getChapterPages, getPageUrl, type ChapterPages } from "@/lib/mangadex";
 import { saveProgress } from "@/lib/bookmarks";
 
 const MangaReader = () => {
   const { mangaId, chapterId } = useParams<{ mangaId: string; chapterId: string }>();
   const navigate = useNavigate();
   const [pages, setPages] = useState<ChapterPages | null>(null);
+  const [chapterNumber, setChapterNumber] = useState("");
+  const [externalUrl, setExternalUrl] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [textSize, setTextSize] = useState(100); // percentage
@@ -19,30 +21,47 @@ const MangaReader = () => {
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    if (!chapterId) return;
+    if (!chapterId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
     setLoading(true);
     setCurrentPage(0);
-    getChapterPages(chapterId).then((data) => {
+    setChapterNumber("");
+    setExternalUrl(null);
+    Promise.all([getChapterPages(chapterId), getChapterMeta(chapterId)]).then(([data, meta]) => {
+      if (cancelled) return;
       setPages(data);
+      setChapterNumber(meta?.chapter || "");
+      setExternalUrl(meta?.externalUrl || null);
       setLoading(false);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [chapterId]);
+
+  const pageFiles = !pages
+    ? []
+    : quality === "saver" && pages.dataSaver?.length
+      ? pages.dataSaver
+      : pages.data || [];
+  const totalPages = pageFiles.length;
 
   // Save progress
   useEffect(() => {
-    if (pages && mangaId && chapterId) {
+    if (pages && mangaId && chapterId && totalPages > 0) {
       saveProgress({
         mangaId,
         chapterId,
-        chapterNumber: "",
-        page: currentPage,
-        totalPages: pages.data.length,
+        chapterNumber,
+        page: Math.min(currentPage, totalPages - 1),
+        totalPages,
         updatedAt: new Date().toISOString(),
       });
     }
-  }, [currentPage, pages, mangaId, chapterId]);
-
-  const totalPages = pages?.data.length || 0;
+  }, [currentPage, pages, mangaId, chapterId, chapterNumber, totalPages]);
 
   const goNext = useCallback(() => {
     setCurrentPage((p) => Math.min(p + 1, totalPages - 1));
@@ -81,7 +100,11 @@ const MangaReader = () => {
 
   const handleDownloadPage = async () => {
     if (!pages) return;
-    const url = getPageUrl(pages, currentPage, quality);
+    const url = getPageUrl(
+      pages,
+      Math.min(currentPage, totalPages - 1),
+      quality === "saver" && pages.dataSaver?.length ? "saver" : "full"
+    );
     try {
       const res = await fetch(url);
       const blob = await res.blob();
@@ -107,10 +130,27 @@ const MangaReader = () => {
   if (!pages || totalPages === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16">
-        <div className="text-center">
-          <p className="text-xl font-display font-bold text-foreground">No pages available</p>
-          <p className="text-sm text-muted-foreground mt-2">This chapter may not be available in English</p>
-          <button onClick={() => navigate(-1)} className="mt-4 text-sm text-primary hover:underline">← Go back</button>
+        <div className="text-center max-w-md px-4">
+          {externalUrl ? (
+            <>
+              <p className="text-xl font-display font-bold text-foreground">This chapter is hosted elsewhere</p>
+              <p className="text-sm text-muted-foreground mt-2">MangaDex doesn’t have page images for it. The publisher link is below.</p>
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block text-sm text-primary hover:underline"
+              >
+                Open the official chapter
+              </a>
+            </>
+          ) : (
+            <>
+              <p className="text-xl font-display font-bold text-foreground">No pages available</p>
+              <p className="text-sm text-muted-foreground mt-2">This chapter may not be available in English</p>
+            </>
+          )}
+          <button onClick={() => navigate(-1)} className="mt-4 block mx-auto text-sm text-primary hover:underline">← Go back</button>
         </div>
       </div>
     );
@@ -198,7 +238,7 @@ const MangaReader = () => {
         <AnimatePresence mode="wait">
           <motion.img
             key={currentPage}
-            src={getPageUrl(pages, currentPage, quality)}
+            src={getPageUrl(pages, Math.min(currentPage, totalPages - 1), quality === "saver" && pages.dataSaver?.length ? "saver" : "full")}
             alt={`Page ${currentPage + 1}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

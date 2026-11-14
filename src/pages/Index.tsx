@@ -5,8 +5,8 @@ import { Sparkles, Loader2, BookOpen, Star, Trophy, Clapperboard, Library, Searc
 import heroBg from "@/assets/hero-bg.jpg";
 import AnimeCard from "@/components/AnimeCard";
 import TrendingCarousel from "@/components/TrendingCarousel";
-import { getTopAnime, type JikanAnime } from "@/lib/jikan";
-import { getPopularManga, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
+import { getAiringAnime, getTopAnime, type JikanAnime } from "@/lib/jikan";
+import { fallbackCover, getPopularManga, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,84 +15,136 @@ const Index = () => {
   const [topItems, setTopItems] = useState<JikanAnime[]>([]);
   const [trendingItems, setTrendingItems] = useState<JikanAnime[]>([]);
   const [popularManga, setPopularManga] = useState<MangaDexManga[]>([]);
+  const [mangaError, setMangaError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const filterRef = useRef(activeFilter);
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(hasMore);
+  const loadingRef = useRef(loading);
+  const loadingMoreRef = useRef(false);
+  const itemsRef = useRef<JikanAnime[]>([]);
+  const requestRef = useRef(0);
+  filterRef.current = activeFilter;
+  hasMoreRef.current = hasMore;
+  loadingRef.current = loading;
 
   useEffect(() => {
     setActiveFilter(queryFilter);
   }, [queryFilter]);
 
-  // Reset on filter change
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setPage(1);
-    setHasMore(true);
-    setTopItems([]);
-    getTopAnime(activeFilter, 1)
+  const loadCatalogPage = useCallback((filter: "anime" | "manga", pageNum: number, mode: "replace" | "append") => {
+    const requestId = mode === "replace" ? ++requestRef.current : requestRef.current;
+    if (mode === "append") {
+      if (loadingRef.current || loadingMoreRef.current || !hasMoreRef.current) return;
+      loadingMoreRef.current = true;
+      setLoadingMore(true);
+    } else {
+      loadingRef.current = true;
+      loadingMoreRef.current = false;
+      itemsRef.current = [];
+      setLoading(true);
+      setLoadingMore(false);
+      pageRef.current = 1;
+      setHasMore(true);
+      hasMoreRef.current = true;
+      setTopItems([]);
+    }
+
+    getTopAnime(filter, pageNum)
       .then((data) => {
-        if (!cancelled) {
-          setTopItems(data);
-          setHasMore(data.length >= 15);
-        }
+        if (requestRef.current !== requestId) return;
+        const items = Array.isArray(data) ? data : [];
+        const prev = mode === "replace" ? [] : itemsRef.current;
+        const seen = new Set(prev.map((item) => item.mal_id));
+        const fresh = items.filter((item) => item?.mal_id && !seen.has(item.mal_id));
+        const next = [...prev, ...fresh];
+        itemsRef.current = next;
+        setTopItems(next);
+        pageRef.current = pageNum;
+        const more = items.length >= 15 && (mode === "replace" || fresh.length > 0);
+        setHasMore(more);
+        hasMoreRef.current = more;
       })
       .catch(() => {
-        if (!cancelled) setTopItems([]);
+        if (requestRef.current !== requestId) return;
+        if (mode === "replace") {
+          itemsRef.current = [];
+          setTopItems([]);
+        }
+        setHasMore(false);
+        hasMoreRef.current = false;
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (requestRef.current !== requestId) return;
+        if (mode === "replace") {
+          loadingRef.current = false;
+          setLoading(false);
+        }
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
+        requestAnimationFrame(() => {
+          if (requestRef.current !== requestId || loadingRef.current || loadingMoreRef.current || !hasMoreRef.current) return;
+          const sentinel = sentinelRef.current;
+          if (!sentinel) return;
+          if (sentinel.getBoundingClientRect().top <= window.innerHeight + 200) {
+            loadCatalogPage(filterRef.current, pageRef.current + 1, "append");
+          }
+        });
       });
-    return () => { cancelled = true; };
-  }, [activeFilter]);
+  }, []);
 
-  // Load more
+  useEffect(() => {
+    loadCatalogPage(activeFilter, 1, "replace");
+  }, [activeFilter, loadCatalogPage]);
+
   const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore) return;
-    const nextPage = page + 1;
-    setLoadingMore(true);
-    getTopAnime(activeFilter, nextPage)
-      .then((data) => {
-        setTopItems((prev) => [...prev, ...data]);
-        setPage(nextPage);
-        setHasMore(data.length >= 15);
-      })
-      .catch(() => setHasMore(false))
-      .finally(() => setLoadingMore(false));
-  }, [activeFilter, page, loadingMore, hasMore]);
+    loadCatalogPage(filterRef.current, pageRef.current + 1, "append");
+  }, [loadCatalogPage]);
 
-  // Intersection observer for infinite scroll
+  // Intersection observer for infinite scroll. Recreating it on every page
+  // would immediately request the next page again while the sentinel is visible.
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
+    let wasIntersecting = false;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loading) {
-          loadMore();
-        }
+        const isIntersecting = entries[0]?.isIntersecting ?? false;
+        if (isIntersecting && !wasIntersecting) loadMore();
+        wasIntersecting = isIntersecting;
       },
       { rootMargin: "200px" }
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loadMore, loading]);
+  }, [loadMore]);
 
   // Fetch trending + popular manga
   useEffect(() => {
     let cancelled = false;
-    fetch("https://api.jikan.moe/v4/top/anime?filter=airing&limit=10&sfw=true")
-      .then((r) => r.json())
-      .then((json) => {
-        if (!cancelled) setTrendingItems(json.data || []);
+    getAiringAnime()
+      .then((data) => {
+        if (!cancelled) setTrendingItems(data);
       })
       .catch(() => {
         if (!cancelled) setTrendingItems([]);
       });
-    getPopularManga().then((data) => {
-      if (!cancelled) setPopularManga(data);
-    });
+    getPopularManga()
+      .then((data) => {
+        if (!cancelled) {
+          setPopularManga(data);
+          setMangaError(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPopularManga([]);
+          setMangaError(true);
+        }
+      });
     return () => { cancelled = true; };
   }, []);
 
@@ -166,7 +218,7 @@ const Index = () => {
               className="hidden md:block"
             >
               <Link to={`/title/${activeFilter}/${featuredTitle.mal_id}`} className="group grid grid-cols-[160px_1fr] gap-5 rounded-lg border border-border/70 bg-card/80 p-4 shadow-2xl backdrop-blur transition-transform hover:-translate-y-1">
-                <img src={featuredTitle.images.jpg.large_image_url} alt={featuredTitle.title} className="aspect-[3/4] rounded-md object-cover" />
+                <img src={featuredTitle.images?.jpg?.large_image_url || featuredTitle.images?.jpg?.image_url || "/placeholder.svg"} alt={featuredTitle.title} className="aspect-[3/4] rounded-md object-cover" />
                 <div className="flex min-w-0 flex-col justify-between py-1">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-primary">Featured #{featuredTitle.rank || 1}</p>
@@ -213,6 +265,16 @@ const Index = () => {
         <TrendingCarousel items={trendingItems} type="anime" />
       )}
 
+      {mangaError && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
+            <BookOpen className="mx-auto mb-2 h-5 w-5 text-muted-foreground" />
+            <p className="text-sm text-foreground">Manga browsing is unavailable right now.</p>
+            <p className="mt-1 text-xs text-muted-foreground">The MangaDex proxy did not respond. Ranked manga from MyAnimeList still works from the catalog below.</p>
+          </div>
+        </section>
+      )}
+
       {/* Read Manga Section */}
       {popularManga.length > 0 && (
         <section className="container mx-auto px-4 py-8">
@@ -239,6 +301,7 @@ const Index = () => {
                         referrerPolicy="no-referrer"
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
+                        onError={(e) => fallbackCover(e.currentTarget)}
                       />
                     </div>
                     <div className="p-2.5">
@@ -326,8 +389,8 @@ const Index = () => {
 
         {!loading && topItems.length === 0 && (
           <div className="py-20 text-center text-muted-foreground">
-            <p className="text-lg">Failed to load data</p>
-            <p className="text-sm mt-1">Jikan API may be rate-limited. Try refreshing.</p>
+            <p className="text-lg">Couldn’t load the catalog</p>
+            <p className="text-sm mt-1">The anime database didn’t respond. It may be rate-limited or unreachable. Try refreshing.</p>
           </div>
         )}
       </section>

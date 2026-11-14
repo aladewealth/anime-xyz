@@ -1,4 +1,4 @@
-import { Play, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface TrailerEmbedProps {
   youtubeId: string | null;
@@ -26,7 +26,14 @@ const TrailerEmbed = ({ youtubeId, embedUrl, streaming, title }: TrailerEmbedPro
       {streaming && streaming.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {streaming.map((s) => (
-            <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer">
+            <a
+              key={s.url}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80"
+            >
+              <ExternalLink className="h-3 w-3" />
               {s.name}
             </a>
           ))}

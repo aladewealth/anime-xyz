@@ -3,15 +3,24 @@
 const PROXY_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mangadex-proxy`;
 const PROXY_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
-const mdFetch = (path: string, init?: RequestInit) =>
-  fetch(`${PROXY_BASE}?path=${encodeURIComponent(path)}`, {
+const mdFetch = (path: string, init?: RequestInit) => {
+  if (!import.meta.env.VITE_SUPABASE_URL || !PROXY_KEY) {
+    return Promise.reject(new Error("MangaDex proxy is not configured"));
+  }
+  const controller = new AbortController();
+  const timer = init?.signal ? undefined : setTimeout(() => controller.abort(), 12000);
+  return fetch(`${PROXY_BASE}?path=${encodeURIComponent(path)}`, {
     ...init,
     headers: {
       ...(init?.headers ?? {}),
       apikey: PROXY_KEY,
       Authorization: `Bearer ${PROXY_KEY}`,
     },
+    signal: init?.signal ?? controller.signal,
+  }).finally(() => {
+    if (timer) clearTimeout(timer);
   });
+};
 
 export interface MangaDexManga {
   id: string;
@@ -33,6 +42,7 @@ export interface MangaDexChapter {
     translatedLanguage: string;
     pages: number;
     publishAt: string;
+    externalUrl?: string | null;
   };
 }
 
@@ -44,15 +54,13 @@ export interface ChapterPages {
 }
 
 export async function getPopularManga(): Promise<MangaDexManga[]> {
-  try {
-    const res = await mdFetch(
-      `/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
-    );
-    const json = await res.json();
-    return json.data || [];
-  } catch {
-    return [];
-  }
+  const res = await mdFetch(
+    `/manga?limit=12&includes[]=cover_art&order[followedCount]=desc&contentRating[]=safe&contentRating[]=suggestive&hasAvailableChapters=true`
+  );
+  if (!res.ok) throw new Error(`MangaDex proxy failed (${res.status})`);
+  const json = await res.json();
+  if (!Array.isArray(json.data)) throw new Error("Unexpected MangaDex response");
+  return json.data;
 }
 
 export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
@@ -60,8 +68,9 @@ export async function searchMangaDex(query: string): Promise<MangaDexManga[]> {
   const res = await mdFetch(
     `/manga?title=${encodeURIComponent(query)}&limit=10&includes[]=cover_art&contentRating[]=safe&contentRating[]=suggestive`
   );
+  if (!res.ok) throw new Error(`MangaDex search failed (${res.status})`);
   const json = await res.json();
-  return json.data || [];
+  return Array.isArray(json.data) ? json.data : [];
 }
 
 export async function getMangaDexManga(id: string): Promise<MangaDexManga | null> {
@@ -88,20 +97,41 @@ export async function getMangaChapters(mangaId: string, offset = 0): Promise<{ c
   }
 }
 
+export async function getChapterMeta(chapterId: string): Promise<{ chapter: string; externalUrl: string | null } | null> {
+  try {
+    const res = await mdFetch(`/chapter/${chapterId}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const attributes = json.data?.attributes;
+    const chapter = attributes?.chapter;
+    return {
+      chapter: chapter == null ? "" : String(chapter),
+      externalUrl: attributes?.externalUrl || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getChapterPages(chapterId: string): Promise<ChapterPages | null> {
   try {
     const res = await mdFetch(`/at-home/server/${chapterId}`);
     if (!res.ok) return null;
     const json = await res.json();
+    if (!json?.chapter?.hash || !Array.isArray(json.chapter.data)) return null;
     return {
       baseUrl: json.baseUrl,
       hash: json.chapter.hash,
       data: json.chapter.data,
-      dataSaver: json.chapter.dataSaver,
+      dataSaver: Array.isArray(json.chapter.dataSaver) ? json.chapter.dataSaver : [],
     };
   } catch {
     return null;
   }
+}
+
+export function fallbackCover(img: HTMLImageElement) {
+  if (!img.src.includes("/placeholder.svg")) img.src = "/placeholder.svg";
 }
 
 export function getMangaCoverUrl(manga: MangaDexManga, size: "256" | "512" = "512"): string {

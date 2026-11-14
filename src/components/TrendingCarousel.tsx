@@ -66,7 +66,7 @@ const TrendingCarousel = ({ items, type }: TrendingCarouselProps) => {
               {/* Image side */}
               <div className="relative sm:w-[220px] shrink-0">
                 <img
-                  src={item.images.jpg.large_image_url || item.images.jpg.image_url}
+                  src={item.images?.jpg?.large_image_url || item.images?.jpg?.image_url || "/placeholder.svg"}
                   alt={item.title}
                   className="h-[200px] sm:h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />

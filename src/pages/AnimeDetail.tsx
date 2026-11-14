@@ -19,7 +19,13 @@ const AnimeDetail = () => {
   const malId = Number(id);
 
   useEffect(() => {
-    if (!malId) return;
+    if (!Number.isFinite(malId) || malId <= 0) {
+      setAnime(null);
+      setReviews([]);
+      setRecommendations([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setAnime(null);
     setReviews([]);
@@ -50,7 +56,8 @@ const AnimeDetail = () => {
     return (
       <div className="min-h-screen flex items-center justify-center pt-16">
         <div className="text-center">
-          <p className="text-2xl font-display font-bold text-foreground">Title not found</p>
+          <p className="text-2xl font-display font-bold text-foreground">Title unavailable</p>
+          <p className="mt-2 text-sm text-muted-foreground">It may not exist, or the anime database didn’t respond.</p>
           <Link to="/" className="mt-4 inline-block text-sm text-primary hover:underline">← Back to home</Link>
         </div>
       </div>

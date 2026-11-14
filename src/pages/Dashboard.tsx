@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, Tv, Star, Clock, TrendingUp, ArrowRight, Bookmark } from "lucide-react";
-import { getBookmarks, getAllProgress, type BookmarkItem, type ReadingProgress } from "@/lib/bookmarks";
+import { getBookmarks, getAllProgress, titlePath, type BookmarkItem, type ReadingProgress } from "@/lib/bookmarks";
 import { getRecommendations, type JikanAnime } from "@/lib/jikan";
 
 const Dashboard = () => {
@@ -78,7 +78,7 @@ const Dashboard = () => {
               {bookmarks.slice(0, 6).map((item) => (
                 <Link
                   key={`${item.type}-${item.id}`}
-                  to={item.type === "anime" ? `/title/anime/${item.id}` : `/manga/${item.id}`}
+                  to={titlePath(item)}
                   className="group"
                 >
                   <div className="aspect-[3/4] rounded-lg overflow-hidden border border-border bg-muted relative">
@@ -121,7 +121,7 @@ const Dashboard = () => {
                     <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                        Chapter {r.chapterNumber}
+                        {r.chapterNumber ? `Chapter ${r.chapterNumber}` : "Continue reading"}
                       </p>
                       <div className="mt-1 h-1.5 w-full rounded-full bg-muted overflow-hidden">
                         <div
