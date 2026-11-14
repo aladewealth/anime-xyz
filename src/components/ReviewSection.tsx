@@ -97,7 +97,8 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
   const toggleExpand = (id: string | number) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
@@ -202,6 +203,7 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="What did you think? Share your experience..."
             rows={3}
+            maxLength={500}
             className="w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary resize-none"
           />
           <div className="flex items-center justify-between">
@@ -299,15 +301,15 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <img
-                        src={r.user.images.jpg.image_url}
-                        alt={r.user.username}
+                        src={r.user?.images?.jpg?.image_url || "/placeholder.svg"}
+                        alt={r.user?.username || "Reviewer"}
                         className="h-7 w-7 rounded-full object-cover"
                       />
                       <div>
-                        <p className="text-sm font-medium text-foreground">{r.user.username}</p>
+                        <p className="text-sm font-medium text-foreground">{r.user?.username || "MyAnimeList user"}</p>
                         <p className="text-xs text-muted-foreground">
-                          {new Date(r.date).toLocaleDateString()}
-                          {r.tags.length > 0 && ` · ${r.tags[0]}`}
+                          {r.date ? new Date(r.date).toLocaleDateString() : ""}
+                          {r.tags?.length > 0 && ` · ${r.tags[0]}`}
                         </p>
                       </div>
                     </div>
@@ -316,7 +318,7 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
                   <p className={`mt-3 text-sm text-foreground/80 leading-relaxed ${isExpanded ? "" : "line-clamp-3"}`}>
                     {r.review}
                   </p>
-                  {r.review.length > 200 && (
+                  {(r.review?.length || 0) > 200 && (
                     <button
                       onClick={() => toggleExpand(r.mal_id)}
                       className="mt-1 text-xs text-primary hover:underline"
@@ -325,10 +327,10 @@ const ReviewSection = ({ reviews, animeId }: ReviewSectionProps) => {
                     </button>
                   )}
                   <div className="mt-3 flex items-center gap-3">
-                    <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <ThumbsUp className="h-3 w-3" />
-                      <span>{r.reactions.overall}</span>
-                    </button>
+                      <span>{r.reactions?.overall ?? 0}</span>
+                    </span>
                   </div>
                 </motion.div>
               );

@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, Loader2, PlayCircle } from "lucide-react";
-import { getMangaDexManga, getMangaChapters, getMangaCoverUrl, type MangaDexManga, type MangaDexChapter } from "@/lib/mangadex";
+import { ArrowLeft, BookOpen, ExternalLink, Loader2, PlayCircle } from "lucide-react";
+import { fallbackCover, getMangaDexManga, getMangaChapters, getMangaCoverUrl, type MangaDexManga, type MangaDexChapter } from "@/lib/mangadex";
 import { getProgress } from "@/lib/bookmarks";
 import BookmarkButton from "@/components/BookmarkButton";
+
+function formatPublished(value: string | null | undefined) {
+  if (!value) return "";
+  const published = new Date(value);
+  return Number.isNaN(published.getTime()) ? "" : published.toLocaleDateString();
+}
 
 const MangaDetail = () => {
   const { mangaId } = useParams<{ mangaId: string }>();
@@ -81,7 +87,7 @@ const MangaDetail = () => {
             animate={{ opacity: 1, x: 0 }}
             className="shrink-0"
           >
-            <img src={coverUrl} alt={title} referrerPolicy="no-referrer" className="w-full max-w-[280px] mx-auto md:mx-0 rounded-xl shadow-2xl" />
+            <img src={coverUrl} alt={title} referrerPolicy="no-referrer" onError={(e) => fallbackCover(e.currentTarget)} className="w-full max-w-[280px] mx-auto md:mx-0 rounded-xl shadow-2xl" />
           </motion.div>
 
           <motion.div
@@ -109,7 +115,7 @@ const MangaDetail = () => {
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">{title}</h1>
 
             <div className="flex flex-wrap gap-1.5">
-              {manga.attributes.tags.slice(0, 8).map((t) => (
+              {(manga.attributes.tags ?? []).slice(0, 8).map((t) => (
                 <span key={t.attributes.name.en} className="px-3 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
                   {t.attributes.name.en}
                 </span>
@@ -154,28 +160,38 @@ const MangaDetail = () => {
           <p className="text-sm text-muted-foreground py-4">No English chapters available</p>
         ) : (
           <div className="grid gap-1.5">
-            {chapters.map((ch) => (
-              <Link
-                key={ch.id}
-                to={`/read/${mangaId}/${ch.id}`}
-                className={`flex items-center justify-between px-4 py-3 rounded-lg border transition-colors hover:bg-secondary/50 ${
-                  progress?.chapterId === ch.id ? "border-primary bg-primary/5" : "border-border"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
-                    Ch. {ch.attributes.chapter || "?"}
+            {chapters.map((ch) => {
+              const externalUrl = ch.attributes.externalUrl;
+              const className = `flex items-center justify-between px-4 py-3 rounded-lg border transition-colors hover:bg-secondary/50 ${
+                progress?.chapterId === ch.id ? "border-primary bg-primary/5" : "border-border"
+              }`;
+              const body = (
+                <>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium text-foreground">
+                      Ch. {ch.attributes.chapter || "?"}
+                    </span>
+                    {ch.attributes.title && (
+                      <span className="text-sm text-muted-foreground hidden sm:inline truncate">— {ch.attributes.title}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0 inline-flex items-center gap-1">
+                    {externalUrl && <ExternalLink className="h-3 w-3" />}
+                    {externalUrl ? "Official site" : formatPublished(ch.attributes.publishAt)}
                   </span>
-                  {ch.attributes.title && (
-                    <span className="text-sm text-muted-foreground hidden sm:inline">— {ch.attributes.title}</span>
-                  )}
-                </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(ch.attributes.publishAt).toLocaleDateString()}
-                </span>
-              </Link>
-            ))}
+                </>
+              );
+              return externalUrl ? (
+                <a key={ch.id} href={externalUrl} target="_blank" rel="noopener noreferrer" className={className}>
+                  {body}
+                </a>
+              ) : (
+                <Link key={ch.id} to={`/read/${mangaId}/${ch.id}`} className={className}>
+                  {body}
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

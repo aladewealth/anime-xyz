@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { toggleBookmark, isBookmarked, type BookmarkItem } from "@/lib/bookmarks";
 import { toast } from "sonner";
@@ -10,6 +10,10 @@ interface BookmarkButtonProps {
 
 const BookmarkButton = ({ item, size = "md" }: BookmarkButtonProps) => {
   const [bookmarked, setBookmarked] = useState(() => isBookmarked(item.id, item.type));
+
+  useEffect(() => {
+    setBookmarked(isBookmarked(item.id, item.type));
+  }, [item.id, item.type]);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();

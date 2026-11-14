@@ -46,6 +46,12 @@ export function toggleBookmark(item: BookmarkItem): boolean {
   }
 }
 
+/** MangaDex ids are UUIDs. Numeric ids are MyAnimeList titles. */
+export function titlePath(item: { id: string; type: "anime" | "manga" }): string {
+  if (item.type === "manga" && item.id.includes("-")) return `/manga/${item.id}`;
+  return `/title/${item.type}/${item.id}`;
+}
+
 export function removeBookmark(id: string, type: "anime" | "manga"): void {
   const bookmarks = getBookmarks().filter((b) => !(b.id === id && b.type === type));
   localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));

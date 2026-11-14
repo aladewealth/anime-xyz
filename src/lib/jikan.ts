@@ -56,35 +56,64 @@ export interface JikanResponse<T> {
   };
 }
 
-// Rate-limit helper: Jikan allows ~3 req/s
+// Rate-limit helper: Jikan allows ~3 req/s and often stalls, so cap each attempt.
+const REQUEST_TIMEOUT_MS = 12000;
 let lastRequest = 0;
+
+function fetchWithTimeout(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function rateLimitedFetch(url: string): Promise<Response> {
   const now = Date.now();
   const wait = Math.max(0, 350 - (now - lastRequest));
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastRequest = Date.now();
-  const res = await fetch(url);
+
+  const res = await fetchWithTimeout(url);
   if (res.status === 429) {
     await new Promise((r) => setTimeout(r, 1000));
-    return fetch(url);
+    lastRequest = Date.now();
+    return fetchWithTimeout(url);
   }
   return res;
 }
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await rateLimitedFetch(url);
+  if (!res.ok) {
+    throw new Error(`Jikan request failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+function asList<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 export async function searchAnime(query: string, type: "anime" | "manga" = "anime"): Promise<JikanAnime[]> {
   if (!query.trim()) return [];
-  const res = await rateLimitedFetch(
+  const json = await fetchJson<JikanResponse<JikanAnime[]>>(
     `${BASE_URL}/${type}?q=${encodeURIComponent(query)}&limit=10&sfw=true`
   );
-  const json: JikanResponse<JikanAnime[]> = await res.json();
-  return json.data;
+  return asList(json.data);
 }
 
 export async function getTopAnime(type: "anime" | "manga" = "anime", page = 1): Promise<JikanAnime[]> {
   const endpoint = type === "anime" ? "top/anime" : "top/manga";
-  const res = await rateLimitedFetch(`${BASE_URL}/${endpoint}?page=${page}&limit=15&sfw=true`);
-  const json: JikanResponse<JikanAnime[]> = await res.json();
-  return json.data;
+  const json = await fetchJson<JikanResponse<JikanAnime[]>>(
+    `${BASE_URL}/${endpoint}?page=${page}&limit=15&sfw=true`
+  );
+  return asList(json.data);
+}
+
+export async function getAiringAnime(): Promise<JikanAnime[]> {
+  const json = await fetchJson<JikanResponse<JikanAnime[]>>(
+    `${BASE_URL}/top/anime?filter=airing&limit=10&sfw=true`
+  );
+  return asList(json.data);
 }
 
 export async function getAnimeById(id: number, type: "anime" | "manga" = "anime"): Promise<JikanAnime | null> {
@@ -92,7 +121,7 @@ export async function getAnimeById(id: number, type: "anime" | "manga" = "anime"
     const res = await rateLimitedFetch(`${BASE_URL}/${type}/${id}/full`);
     if (!res.ok) return null;
     const json: JikanResponse<JikanAnime> = await res.json();
-    return json.data;
+    return json.data ?? null;
   } catch {
     return null;
   }
@@ -103,7 +132,7 @@ export async function getAnimeReviews(id: number, type: "anime" | "manga" = "ani
     const res = await rateLimitedFetch(`${BASE_URL}/${type}/${id}/reviews?page=1`);
     if (!res.ok) return [];
     const json: JikanResponse<JikanReview[]> = await res.json();
-    return json.data.slice(0, 6);
+    return asList(json.data).slice(0, 6);
   } catch {
     return [];
   }
@@ -114,7 +143,10 @@ export async function getRecommendations(id: number, type: "anime" | "manga" = "
     const res = await rateLimitedFetch(`${BASE_URL}/${type}/${id}/recommendations`);
     if (!res.ok) return [];
     const json: JikanResponse<{ entry: JikanAnime }[]> = await res.json();
-    return json.data.slice(0, 5).map((r) => r.entry);
+    return asList(json.data)
+      .slice(0, 5)
+      .map((row) => row?.entry)
+      .filter((entry): entry is JikanAnime => Boolean(entry?.mal_id));
   } catch {
     return [];
   }

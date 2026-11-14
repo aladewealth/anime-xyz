@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Search, Sparkles, X, Loader2, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { searchAnime, type JikanAnime } from "@/lib/jikan";
-import { searchMangaDex, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
+import { fallbackCover, searchMangaDex, getMangaCoverUrl, type MangaDexManga } from "@/lib/mangadex";
 
 interface SearchModalProps {
   open: boolean;
@@ -15,6 +15,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
   const [results, setResults] = useState<JikanAnime[]>([]);
   const [mangadexResults, setMangadexResults] = useState<MangaDexManga[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<"anime" | "manga" | "read">("anime");
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -26,6 +27,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
       setQuery("");
       setResults([]);
       setMangadexResults([]);
+      setError(null);
     }
   }, [open]);
 
@@ -46,10 +48,12 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
       if (!q.trim()) {
         setResults([]);
         setMangadexResults([]);
+        setError(null);
         setLoading(false);
         return;
       }
       setLoading(true);
+      setError(null);
       debounceRef.current = setTimeout(async () => {
         try {
           if (type === "read") {
@@ -61,9 +65,15 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
             setResults(data);
             setMangadexResults([]);
           }
+          setError(null);
         } catch {
           setResults([]);
           setMangadexResults([]);
+          setError(
+            type === "read"
+              ? "Manga search is unavailable. The MangaDex proxy did not respond."
+              : "Search is unavailable. The anime database did not respond."
+          );
         } finally {
           setLoading(false);
         }
@@ -152,7 +162,13 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
               </div>
             )}
 
-            {query.length > 0 && !loading && results.length === 0 && mangadexResults.length === 0 && (
+            {query.length > 0 && !loading && error && (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                {error}
+              </div>
+            )}
+
+            {query.length > 0 && !loading && !error && results.length === 0 && mangadexResults.length === 0 && (
               <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No results found for "{query}"
               </div>
@@ -166,7 +182,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                     onClick={() => handleSelect(item)}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
                   >
-                    <img src={item.images.jpg.image_url} alt={item.title} className="h-12 w-9 rounded object-cover" />
+                    <img src={item.images?.jpg?.image_url || "/placeholder.svg"} alt={item.title} className="h-12 w-9 rounded object-cover" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                       <p className="text-xs text-muted-foreground">
@@ -193,7 +209,7 @@ const SearchModal = ({ open, onClose }: SearchModalProps) => {
                       onClick={() => handleSelectMangaDex(item)}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-secondary/50 transition-colors"
                     >
-                      <img src={getMangaCoverUrl(item, "256")} alt={title} referrerPolicy="no-referrer" className="h-12 w-9 rounded object-cover" />
+                      <img src={getMangaCoverUrl(item, "256")} alt={title} referrerPolicy="no-referrer" onError={(e) => fallbackCover(e.currentTarget)} className="h-12 w-9 rounded object-cover" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{title}</p>
                         <p className="text-xs text-muted-foreground">

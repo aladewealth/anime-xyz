@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Bookmark, Trash2, PlayCircle } from "lucide-react";
-import { getBookmarks, removeBookmark, getAllProgress, type BookmarkItem, type ReadingProgress } from "@/lib/bookmarks";
+import { getBookmarks, removeBookmark, getAllProgress, titlePath, type BookmarkItem, type ReadingProgress } from "@/lib/bookmarks";
 
 const Watchlist = () => {
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
@@ -58,9 +58,7 @@ const Watchlist = () => {
           <div className="grid gap-3">
             {filtered.map((item, i) => {
               const itemProgress = progress[item.id];
-              const detailUrl = item.type === "manga" && item.id.includes("-")
-                ? `/manga/${item.id}`
-                : `/title/${item.type}/${item.id}`;
+              const detailUrl = titlePath(item);
 
               return (
                 <motion.div
